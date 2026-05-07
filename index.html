@@ -8,549 +8,574 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
 <style>
   :root{
-    --navy:        #0E2A2E;
-    --navy-soft:   #1a3d42;
-    --cream:       #F6F1E6;
-    --cream-deep:  #EDE5D2;
-    --gold:        #C9A24A;
-    --gold-deep:   #A8842F;
-    --rust:        #B5512A;
-    --ink:         #0a1e21;
-    --muted:       #5d6f72;
-    --line:        rgba(14,42,46,.12);
+    --bg:           #0a0a0c;
+    --bg-soft:      #131316;
+    --surface:      #18181c;
+    --line:         rgba(255,255,255,0.08);
+    --line-strong:  rgba(255,255,255,0.18);
+    --ink:          #f5f3ee;
+    --ink-soft:     #a8a59e;
+    --muted:        #6b6864;
+    --gold:         #d4a857;
+    --gold-deep:    #b88a3d;
+    --rust:         #c5613a;
   }
 
-  *,*::before,*::after{box-sizing:border-box}
-  html,body{margin:0;padding:0}
+  *,*::before,*::after{ box-sizing: border-box; }
+  html, body{ margin: 0; padding: 0; }
+  html{ background: var(--bg); }
 
   body{
     font-family: 'DM Sans', -apple-system, sans-serif;
     color: var(--ink);
-    background: var(--cream);
-    background-image:
-      repeating-linear-gradient(
-        90deg,
-        transparent 0,
-        transparent 38px,
-        rgba(14,42,46,.035) 38px,
-        rgba(14,42,46,.035) 39px,
-        transparent 39px,
-        transparent 78px
-      );
+    background: var(--bg);
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
     overflow-x: hidden;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
   }
 
-  /* ===== Top bar ===== */
+  /* Film grain */
+  body::after{
+    content:"";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.06;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.7'/></svg>");
+  }
+
+  #scene-canvas{
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .intro-overlay{
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    cursor: pointer;
+  }
+
+  .intro-meta{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4em;
+    opacity: 0;
+    margin-bottom: 32px;
+  }
+
+  .intro-mark{
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: clamp(48px, 9vw, 112px);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+    margin: 0;
+  }
+  .intro-mark .word{
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+  }
+  .intro-mark .word span{
+    display: inline-block;
+    transform: translateY(110%);
+  }
+  .intro-mark em{
+    font-style: italic;
+    font-weight: 300;
+    color: var(--gold);
+  }
+
+  .intro-sub{
+    margin-top: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    opacity: 0;
+  }
+
+  .intro-scroll-hint{
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    opacity: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .intro-scroll-hint::before, .intro-scroll-hint::after{
+    content:""; width: 24px; height: 1px; background: var(--muted);
+  }
+
   header.topbar{
-    padding: 22px 32px;
+    position: relative;
+    z-index: 10;
+    padding: 20px 32px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid var(--line);
-    background: rgba(246,241,230,.85);
-    backdrop-filter: blur(6px);
-    position: sticky;
-    top:0;
-    z-index: 10;
+    background: rgba(10,10,12,0.6);
+    backdrop-filter: blur(12px);
+    opacity: 0;
   }
-
   .brand{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    text-decoration:none;
-    color:var(--navy);
+    display:flex; align-items:center; gap:14px;
+    text-decoration:none; color:var(--ink);
   }
   .brand-mark{
-    width: 36px;
-    height: 36px;
-    border-radius: 6px;
-    background: var(--navy);
-    display:grid;
-    place-items:center;
-    color: var(--gold);
+    width: 32px; height: 32px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #d4a857 0%, #8a6526 100%);
+    display:grid; place-items:center;
+    color: var(--bg);
     font-family:'Fraunces', serif;
-    font-weight:700;
-    font-size: 20px;
+    font-weight:600;
+    font-size: 16px;
     letter-spacing:-0.5px;
   }
   .brand-name{
     font-family:'Fraunces', serif;
-    font-weight: 600;
-    font-size: 18px;
-    letter-spacing: -0.01em;
-    line-height:1;
+    font-weight: 500; font-size: 16px;
+    letter-spacing: -0.01em; line-height:1;
   }
   .brand-sub{
-    font-size: 11px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
-    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.25em;
+    margin-top: 6px;
   }
-
   .top-meta{
-    font-size: 12px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.3em;
   }
-  .top-meta strong{ color: var(--navy); font-weight: 600; }
+  .top-meta strong{ color: var(--ink); font-weight: 500; }
   @media (max-width: 600px){ .top-meta{ display:none; } }
 
-  /* ===== Main layout ===== */
   main{
-    flex: 1;
+    position: relative;
+    z-index: 10;
+    min-height: calc(100vh - 70px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 48px 24px 64px;
-    position: relative;
+    padding: 64px 24px 96px;
+    opacity: 0;
   }
 
-  .card{
-    width: 100%;
-    max-width: 720px;
-    background: #FFFDF7;
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 56px 56px 48px;
-    box-shadow:
-      0 1px 0 rgba(14,42,46,.04),
-      0 30px 60px -30px rgba(14,42,46,.18);
-    position: relative;
-  }
-  .card::before{
-    content:"";
-    position:absolute;
-    inset: 0;
-    border: 1px solid rgba(201,162,74,.25);
-    border-radius: 4px;
-    transform: translate(8px,8px);
-    z-index:-1;
-    pointer-events:none;
-  }
-
-  @media (max-width: 600px){
-    .card{ padding: 36px 24px 32px; }
-    main{ padding: 24px 16px 40px; }
-  }
+  .card{ width: 100%; max-width: 760px; position: relative; }
 
   .eyebrow{
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--gold-deep);
-    text-transform: uppercase;
-    letter-spacing: 0.28em;
-    margin: 0 0 18px;
-    display:flex;
-    align-items:center;
-    gap: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 500;
+    color: var(--gold);
+    text-transform: uppercase; letter-spacing: 0.3em;
+    margin: 0 0 32px;
+    display:flex; align-items:center; gap: 16px;
   }
-  .eyebrow::after{
-    content:"";
-    height: 1px;
-    flex: 1;
-    background: linear-gradient(to right, var(--gold), transparent);
-    max-width: 80px;
+  .eyebrow::before{
+    content:""; width: 24px; height: 1px; background: var(--gold);
   }
 
   h1.headline{
     font-family:'Fraunces', serif;
-    font-weight: 500;
-    font-size: clamp(34px, 5.2vw, 52px);
-    line-height: 1.05;
-    letter-spacing: -0.02em;
-    color: var(--navy);
-    margin: 0 0 20px;
+    font-weight: 300;
+    font-size: clamp(40px, 6.5vw, 72px);
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    margin: 0 0 32px;
   }
   h1.headline em{
-    font-style: italic;
-    color: var(--rust);
-    font-weight: 400;
+    font-style: italic; font-weight: 300; color: var(--gold);
   }
 
   p.lede{
-    font-size: 17px;
-    line-height: 1.55;
-    color: var(--muted);
-    margin: 0 0 36px;
-    max-width: 56ch;
+    font-size: 16px; line-height: 1.6;
+    color: var(--ink-soft);
+    margin: 0 0 48px;
+    max-width: 52ch;
   }
 
-  /* ===== Step machine ===== */
-  .step{ display:none; animation: fadeUp .5s ease both; }
-  .step.active{ display:block; }
-  @keyframes fadeUp {
-    from{ opacity:0; transform: translateY(10px); }
+  .step{ display:none; }
+  .step.active{ display:block; animation: stepIn 0.6s cubic-bezier(0.2,0.8,0.2,1) both; }
+  @keyframes stepIn {
+    from{ opacity:0; transform: translateY(16px); }
     to{ opacity:1; transform: translateY(0); }
   }
 
-  /* ===== Buttons ===== */
   .btn{
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 16px 28px;
-    background: var(--navy);
-    color: var(--cream);
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 12px; padding: 18px 32px;
+    background: var(--ink); color: var(--bg);
     font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    border: none;
-    border-radius: 2px;
-    cursor: pointer;
-    text-decoration: none;
-    transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
-    box-shadow: 0 6px 16px -8px rgba(14,42,46,.4);
+    font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.18em;
+    border: none; border-radius: 2px;
+    cursor: pointer; text-decoration: none;
+    transition: all .3s cubic-bezier(0.2,0.8,0.2,1);
+    position: relative; overflow: hidden;
   }
-  .btn:hover{
-    background: var(--navy-soft);
-    transform: translateY(-1px);
-    box-shadow: 0 10px 22px -10px rgba(14,42,46,.5);
+  .btn::before{
+    content:""; position: absolute; inset: 0;
+    background: var(--gold);
+    transform: translateY(101%);
+    transition: transform .35s cubic-bezier(0.7,0,0.3,1);
+    z-index: 0;
   }
-  .btn:active{ transform: translateY(0); }
-  .btn .arrow{
-    transition: transform .25s ease;
-    display: inline-block;
-  }
-  .btn:hover .arrow{ transform: translateX(4px); }
+  .btn > *{ position: relative; z-index: 1; }
+  .btn:hover::before{ transform: translateY(0); }
+  .btn:hover{ color: var(--bg); }
+  .btn .arrow{ transition: transform .3s ease; }
+  .btn:hover .arrow{ transform: translateX(6px); }
 
   .btn-secondary{
-    background: transparent;
-    color: var(--navy);
-    border: 1px solid var(--navy);
-    box-shadow: none;
+    background: transparent; color: var(--ink);
+    border: 1px solid var(--line-strong);
   }
-  .btn-secondary:hover{
-    background: var(--navy);
-    color: var(--cream);
-  }
+  .btn-secondary::before{ background: var(--ink); }
+  .btn-secondary:hover{ color: var(--bg); }
 
-  .btn-gold{
-    background: var(--gold-deep);
-    color: #fff;
-  }
-  .btn-gold:hover{ background: #8d6d22; }
+  .btn-gold{ background: var(--gold); color: var(--bg); }
+  .btn-gold::before{ background: var(--ink); }
+  .btn-gold:hover{ color: var(--gold); }
 
-  /* ===== Step 1: intro ===== */
   .quick-meta{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 24px 36px;
-    margin: 36px 0 8px;
-    padding-top: 28px;
+    display: flex; flex-wrap: wrap;
+    gap: 32px 48px;
+    margin-top: 64px; padding-top: 36px;
     border-top: 1px solid var(--line);
-    font-size: 12px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.25em;
   }
   .quick-meta div strong{
-    display:block;
-    color: var(--navy);
+    display:block; color: var(--ink);
     font-family:'Fraunces', serif;
-    font-size: 18px;
-    text-transform: none;
-    letter-spacing: -0.01em;
-    margin-top: 4px;
-    font-weight: 500;
+    font-size: 22px;
+    text-transform: none; letter-spacing: -0.01em;
+    margin-top: 8px; font-weight: 400;
   }
 
-  /* ===== Step 2: rating ===== */
   .rating-prompt{
     font-family:'Fraunces', serif;
-    font-weight: 500;
-    font-size: clamp(28px, 4vw, 40px);
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-    color: var(--navy);
-    margin: 0 0 12px;
+    font-weight: 300;
+    font-size: clamp(32px, 5vw, 56px);
+    line-height: 1.05; letter-spacing: -0.03em;
+    color: var(--ink); margin: 0 0 16px;
   }
   .rating-sub{
-    color: var(--muted);
-    font-size: 15px;
-    margin: 0 0 36px;
+    color: var(--ink-soft);
+    font-size: 14px; margin: 0 0 48px;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase; letter-spacing: 0.2em;
   }
 
   .scale{
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 12px;
-    margin-bottom: 18px;
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 14px; margin-bottom: 24px;
   }
-  @media (max-width: 600px){
-    .scale{ gap: 8px; }
-  }
+  @media (max-width: 600px){ .scale{ gap: 8px; } }
 
   .scale button{
     aspect-ratio: 1 / 1;
-    border: 1px solid var(--line);
-    background: #FFFDF7;
-    color: #c9c2b0;
-    border-radius: 4px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--muted);
+    border-radius: 2px;
     cursor: pointer;
-    transition: all .18s ease;
+    transition: all .3s cubic-bezier(0.2,0.8,0.2,1);
     position: relative;
-    display: grid;
-    place-items: center;
-    padding: 0;
+    display: grid; place-items: center;
+    padding: 0; overflow: hidden;
   }
+  .scale button::before{
+    content:""; position: absolute; inset: 0;
+    background: var(--gold);
+    transform: translateY(101%);
+    transition: transform .35s cubic-bezier(0.7,0,0.3,1);
+    z-index: 0;
+  }
+  .scale button > *{ position: relative; z-index: 1; }
   .scale button svg{
-    width: 60%;
-    height: 60%;
-    transition: transform .18s ease;
+    width: 55%; height: 55%;
+    transition: transform .3s ease;
   }
-  .scale button:hover{
-    background: var(--cream-deep);
-    color: var(--gold-deep);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px -8px rgba(14,42,46,.3);
-  }
+  .scale button:hover::before{ transform: translateY(0); }
+  .scale button:hover{ color: var(--bg); border-color: var(--gold); }
   .scale button:hover svg{ transform: scale(1.1); }
   .scale button.is-selected{
-    background: var(--gold-deep);
-    color: #fff;
-    border-color: var(--gold-deep);
+    background: var(--gold); color: var(--bg); border-color: var(--gold);
   }
+  .scale button.is-selected::before{ transform: translateY(0); }
   .scale button .star-num{
-    position: absolute;
-    bottom: 6px;
-    right: 8px;
-    font-family:'Fraunces', serif;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--muted);
-    opacity: 0.6;
+    position: absolute; bottom: 8px; right: 10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 9px; font-weight: 500;
+    color: var(--muted); opacity: 0.5;
+    text-transform: uppercase; letter-spacing: 0.1em;
   }
-  .scale button.is-selected .star-num{ color: #fff; opacity: 0.85; }
+  .scale button:hover .star-num,
+  .scale button.is-selected .star-num{ color: var(--bg); opacity: 0.85; }
 
   .scale-labels{
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
-    margin-bottom: 36px;
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.25em;
+    margin-bottom: 48px;
   }
 
-  /* ===== Step 3: feedback ===== */
   .feedback-rating-pill{
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 14px;
-    background: var(--cream-deep);
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 10px 18px;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
     border-radius: 100px;
-    font-size: 12px;
-    color: var(--navy);
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    margin-bottom: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--ink-soft);
+    text-transform: uppercase; letter-spacing: 0.2em;
+    margin-bottom: 28px;
   }
   .feedback-rating-pill strong{
     font-family:'Fraunces', serif;
-    font-size: 16px;
-    color: var(--rust);
+    font-size: 18px; color: var(--rust); font-weight: 400;
   }
 
   textarea{
-    width: 100%;
-    min-height: 160px;
-    padding: 18px 20px;
-    border: 1px solid var(--line);
+    width: 100%; min-height: 180px;
+    padding: 22px 24px;
+    border: 1px solid var(--line-strong);
     border-radius: 2px;
-    background: #FFFDF7;
+    background: var(--surface);
     font-family: 'DM Sans', sans-serif;
-    font-size: 16px;
-    line-height: 1.55;
-    color: var(--ink);
-    resize: vertical;
-    transition: border-color .2s ease, box-shadow .2s ease;
+    font-size: 16px; line-height: 1.6;
+    color: var(--ink); resize: vertical;
+    transition: border-color .3s ease, background .3s ease;
   }
   textarea:focus{
-    outline: none;
-    border-color: var(--navy);
-    box-shadow: 0 0 0 3px rgba(14,42,46,.08);
+    outline: none; border-color: var(--gold);
+    background: var(--bg-soft);
   }
-  textarea::placeholder{ color: #99a5a8; }
+  textarea::placeholder{ color: var(--muted); }
 
   .field-row{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-top: 14px;
+    display:grid; grid-template-columns: 1fr 1fr;
+    gap: 14px; margin-top: 14px;
   }
   @media (max-width: 600px){ .field-row{ grid-template-columns: 1fr; } }
 
   input[type="text"], input[type="email"]{
-    width: 100%;
-    padding: 14px 18px;
-    border: 1px solid var(--line);
+    width: 100%; padding: 16px 22px;
+    border: 1px solid var(--line-strong);
     border-radius: 2px;
-    background: #FFFDF7;
+    background: var(--surface);
     font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    color: var(--ink);
-    transition: border-color .2s ease, box-shadow .2s ease;
+    font-size: 14px; color: var(--ink);
+    transition: border-color .3s ease, background .3s ease;
   }
   input:focus{
-    outline: none;
-    border-color: var(--navy);
-    box-shadow: 0 0 0 3px rgba(14,42,46,.08);
+    outline: none; border-color: var(--gold);
+    background: var(--bg-soft);
   }
-  input::placeholder{ color: #99a5a8; }
+  input::placeholder{ color: var(--muted); }
 
   .actions{
-    display:flex;
-    gap: 12px;
-    margin-top: 28px;
-    flex-wrap: wrap;
+    display:flex; gap: 14px; margin-top: 36px; flex-wrap: wrap;
   }
 
-  /* ===== Step 4: redirect (perfect score) ===== */
-  .celebrate{
-    text-align: center;
-    padding: 12px 0 8px;
-  }
+  .celebrate{ text-align: center; padding: 12px 0 8px; }
   .celebrate .stars{
     font-family:'Fraunces', serif;
-    color: var(--gold-deep);
-    font-size: 44px;
-    letter-spacing: 8px;
-    margin-bottom: 16px;
-    animation: pop .6s cubic-bezier(.2,1.4,.5,1) both;
+    color: var(--gold);
+    font-size: 56px; letter-spacing: 12px;
+    margin-bottom: 24px; opacity: 0;
+    animation: starsPop 0.8s cubic-bezier(.2,1.4,.5,1) 0.2s both;
+    text-shadow: 0 0 30px rgba(212,168,87,0.3);
   }
-  @keyframes pop {
+  @keyframes starsPop {
     from{ transform: scale(.6); opacity:0; }
     to{ transform: scale(1); opacity:1; }
   }
   .celebrate h2{
     font-family:'Fraunces', serif;
-    font-weight: 500;
-    font-size: clamp(28px, 4vw, 40px);
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-    color: var(--navy);
-    margin: 0 0 16px;
+    font-weight: 300;
+    font-size: clamp(36px, 5vw, 56px);
+    line-height: 1.05; letter-spacing: -0.03em;
+    color: var(--ink); margin: 0 0 20px;
   }
+  .celebrate h2 em{ font-style: italic; color: var(--gold); }
   .celebrate p{
-    color: var(--muted);
-    font-size: 16px;
-    line-height: 1.55;
-    margin: 0 auto 32px;
-    max-width: 48ch;
+    color: var(--ink-soft);
+    font-size: 16px; line-height: 1.6;
+    margin: 0 auto 40px; max-width: 48ch;
   }
 
   .google-card{
-    background: var(--cream);
-    border: 1px solid var(--line);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
     border-radius: 2px;
-    padding: 24px;
-    margin: 0 auto 28px;
-    max-width: 460px;
+    padding: 24px 28px;
+    margin: 0 auto 36px;
+    max-width: 480px;
     text-align: left;
-    display: flex;
-    align-items: center;
-    gap: 18px;
+    display: flex; align-items: center; gap: 20px;
   }
   .google-card .gicon{
     width: 44px; height: 44px;
-    background: #fff;
-    border-radius: 50%;
-    display:grid;
-    place-items: center;
-    flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    background: #fff; border-radius: 50%;
+    display:grid; place-items: center; flex-shrink: 0;
   }
-  .google-card .gtext{ flex: 1; }
   .google-card .gtext strong{
     display:block;
     font-family: 'Fraunces', serif;
-    font-size: 17px;
-    color: var(--navy);
-    margin-bottom: 2px;
+    font-size: 17px; color: var(--ink);
+    margin-bottom: 4px; font-weight: 400;
   }
   .google-card .gtext span{
-    font-size: 13px;
-    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.2em;
   }
 
-  /* ===== Step 5: thank you ===== */
-  .thanks{ text-align: center; padding: 12px 0; }
+  .thanks{ text-align: center; padding: 24px 0; }
   .thanks .check{
-    width: 64px; height: 64px;
+    width: 72px; height: 72px;
     border-radius: 50%;
-    background: var(--navy);
-    color: var(--gold);
-    display:grid;
-    place-items: center;
-    margin: 0 auto 24px;
-    font-size: 28px;
-    animation: pop .5s cubic-bezier(.2,1.4,.5,1) both;
+    background: var(--gold); color: var(--bg);
+    display:grid; place-items: center;
+    margin: 0 auto 32px; font-size: 32px;
+    animation: checkPop .6s cubic-bezier(.2,1.4,.5,1) both;
+  }
+  @keyframes checkPop {
+    from{ transform: scale(.6); opacity:0; }
+    to{ transform: scale(1); opacity:1; }
   }
   .thanks h2{
     font-family:'Fraunces', serif;
-    font-weight: 500;
-    font-size: clamp(28px, 4vw, 40px);
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-    color: var(--navy);
-    margin: 0 0 14px;
+    font-weight: 300;
+    font-size: clamp(36px, 5vw, 56px);
+    line-height: 1.05; letter-spacing: -0.03em;
+    color: var(--ink); margin: 0 0 20px;
   }
+  .thanks h2 em{ font-style: italic; color: var(--gold); }
   .thanks p{
-    color: var(--muted);
-    font-size: 16px;
-    line-height: 1.55;
-    margin: 0 auto;
-    max-width: 44ch;
+    color: var(--ink-soft);
+    font-size: 16px; line-height: 1.6;
+    margin: 0 auto; max-width: 44ch;
   }
 
-  /* ===== Footer ===== */
   footer{
-    padding: 24px 32px;
+    position: relative; z-index: 10;
+    padding: 32px;
     border-top: 1px solid var(--line);
-    background: var(--cream);
+    background: var(--bg);
     text-align: center;
-    font-size: 12px;
-    color: var(--muted);
-    letter-spacing: 0.04em;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.2em;
+    opacity: 0;
   }
-  footer a{ color: var(--navy); text-decoration: none; border-bottom: 1px solid var(--line); }
-  footer a:hover{ border-color: var(--navy); }
+  footer a{ color: var(--ink-soft); text-decoration: none; transition: color .2s ease; }
+  footer a:hover{ color: var(--gold); }
+  footer .footer-divider{ color: var(--muted); margin: 0 12px; opacity: 0.5; }
 
-  /* ===== Decorative ornament ===== */
-  .ornament{
-    position: absolute;
-    font-family:'Fraunces', serif;
-    color: var(--cream-deep);
-    font-size: 280px;
-    line-height: 1;
-    z-index: 0;
-    pointer-events: none;
-    user-select: none;
-    font-weight: 400;
-    font-style: italic;
+  .skip-intro{
+    position: fixed; top: 24px; right: 24px;
+    z-index: 20;
+    background: transparent;
+    border: 1px solid var(--line-strong);
+    color: var(--ink-soft);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 10px 16px;
+    text-transform: uppercase; letter-spacing: 0.2em;
+    cursor: pointer; border-radius: 2px;
+    opacity: 0;
+    transition: all 0.3s ease;
   }
-  .ornament-tl{ top: 60px; left: -40px; }
-  .ornament-br{ bottom: 60px; right: -40px; transform: rotate(180deg); }
-  @media (max-width: 900px){ .ornament{ display: none; } }
+  .skip-intro:hover{ color: var(--ink); border-color: var(--ink-soft); }
+  .skip-intro.visible{ opacity: 1; }
+  .skip-intro.hidden{ opacity: 0; pointer-events: none; }
 </style>
 </head>
 <body>
 
-<header class="topbar">
+<!-- Safety fallback: always show the page within 3 seconds, even if 3D fails -->
+<script>
+  (function() {
+    var fallbackFired = false;
+    function showSurveyFallback() {
+      if (fallbackFired) return;
+      fallbackFired = true;
+      var introOverlay = document.getElementById('introOverlay');
+      var topbar = document.getElementById('topbar');
+      var main = document.getElementById('main');
+      var footer = document.getElementById('footer');
+      var canvas = document.getElementById('scene-canvas');
+      var skipIntro = document.getElementById('skipIntro');
+
+      if (introOverlay) introOverlay.style.display = 'none';
+      if (skipIntro) { skipIntro.style.opacity = '0'; skipIntro.classList.add('hidden'); }
+      if (canvas) canvas.style.opacity = '0.15';
+      if (topbar) topbar.style.opacity = '1';
+      if (main) main.style.opacity = '1';
+      if (footer) footer.style.opacity = '1';
+    }
+    window.__cancelSurveyFallback = function() { fallbackFired = true; };
+    setTimeout(function() {
+      if (!window.__threeJsTookOver) showSurveyFallback();
+    }, 3000);
+  })();
+</script>
+
+<canvas id="scene-canvas"></canvas>
+
+<button class="skip-intro" id="skipIntro">Skip Intro</button>
+
+<div class="intro-overlay" id="introOverlay">
+  <div class="intro-meta" id="introMeta">Carter Fence Company · Naples, Florida</div>
+  <h1 class="intro-mark" id="introMark">
+    <span class="word"><span>Carter</span></span> <span class="word"><span>Fence.</span></span><br/>
+    <span class="word"><span>Florida-built</span></span> <span class="word"><span>since</span></span> <span class="word"><span><em>1987.</em></span></span>
+  </h1>
+  <div class="intro-sub" id="introSub">Customer Experience Survey</div>
+  <div class="intro-scroll-hint" id="scrollHint">Tap to continue</div>
+</div>
+
+<header class="topbar" id="topbar">
   <a class="brand" href="#">
     <div class="brand-mark">C</div>
     <div>
@@ -563,22 +588,18 @@
   </div>
 </header>
 
-<main>
-  <div class="ornament ornament-tl">"</div>
-  <div class="ornament ornament-br">"</div>
-
+<main id="main">
   <div class="card">
 
-    <!-- ============ STEP 1: INTRO ============ -->
     <section class="step active" data-step="intro">
-      <p class="eyebrow">A quick favor</p>
+      <p class="eyebrow">A Quick Favor</p>
       <h1 class="headline">How did we do, <em>really?</em></h1>
       <p class="lede">
         Thanks for choosing Carter Fence Company. Your honest feedback helps us hold the line on quality &mdash; and helps the next homeowner in Southwest Florida find a fencing crew they can trust.
       </p>
 
       <button class="btn" id="startBtn">
-        Start the survey <span class="arrow">→</span>
+        <span>Start the survey</span> <span class="arrow">→</span>
       </button>
 
       <div class="quick-meta">
@@ -588,32 +609,31 @@
       </div>
     </section>
 
-    <!-- ============ STEP 2: RATING ============ -->
     <section class="step" data-step="rating">
       <p class="eyebrow">Question 1 of 2</p>
       <h2 class="rating-prompt">How would you rate your experience with us?</h2>
-      <p class="rating-sub">Tap a star below — same scale as Google.</p>
+      <p class="rating-sub">Same scale as Google — tap a star</p>
 
       <div class="scale" id="scale">
         <button data-value="1" aria-label="1 star">
-          <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          <span class="star-num">1</span>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span class="star-num">01</span>
         </button>
         <button data-value="2" aria-label="2 stars">
-          <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          <span class="star-num">2</span>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span class="star-num">02</span>
         </button>
         <button data-value="3" aria-label="3 stars">
-          <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          <span class="star-num">3</span>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span class="star-num">03</span>
         </button>
         <button data-value="4" aria-label="4 stars">
-          <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          <span class="star-num">4</span>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span class="star-num">04</span>
         </button>
         <button data-value="5" aria-label="5 stars">
-          <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          <span class="star-num">5</span>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span class="star-num">05</span>
         </button>
       </div>
       <div class="scale-labels">
@@ -622,12 +642,11 @@
       </div>
     </section>
 
-    <!-- ============ STEP 3: FEEDBACK (rating < 5) ============ -->
     <section class="step" data-step="feedback">
       <p class="eyebrow">Question 2 of 2</p>
       <div class="feedback-rating-pill">You rated us <strong id="ratingDisplay">—</strong> / 5</div>
       <h2 class="rating-prompt">How can we improve?</h2>
-      <p class="rating-sub">Be candid. Whatever fell short, we want to hear it.</p>
+      <p class="rating-sub">Be candid — whatever fell short, we want to hear it</p>
 
       <textarea id="feedbackText" placeholder="Tell us what we could have done better — communication, scheduling, install quality, anything at all."></textarea>
 
@@ -638,22 +657,21 @@
 
       <div class="actions">
         <button class="btn" id="submitFeedback">
-          Send to Carter Fence <span class="arrow">→</span>
+          <span>Send to Carter Fence</span> <span class="arrow">→</span>
         </button>
-        <button class="btn btn-secondary" id="backToRating">Change rating</button>
+        <button class="btn btn-secondary" id="backToRating"><span>Change rating</span></button>
       </div>
     </section>
 
-    <!-- ============ STEP 4: 10/10 GOOGLE REVIEW ============ -->
     <section class="step" data-step="celebrate">
       <div class="celebrate">
         <div class="stars">★★★★★</div>
-        <h2>That made our day.</h2>
-        <p>Would you share that 10 on Google? It takes 20 seconds and it genuinely helps our small Naples team keep growing.</p>
+        <h2>That made our <em>day.</em></h2>
+        <p>Would you share that 5 on Google? It takes 20 seconds and it genuinely helps our small Naples team keep growing.</p>
 
         <div class="google-card">
           <div class="gicon">
-            <svg width="22" height="22" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <svg width="22" height="22" viewBox="0 0 48 48">
               <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/>
               <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 18.9 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
               <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
@@ -662,24 +680,23 @@
           </div>
           <div class="gtext">
             <strong>Leave a Google review</strong>
-            <span>Carter Fence Company · Naples, FL</span>
+            <span>Carter Fence · Naples, FL</span>
           </div>
         </div>
 
         <div class="actions" style="justify-content:center;">
           <a class="btn btn-gold" id="googleReviewBtn" href="#" target="_blank" rel="noopener">
-            Open Google Review <span class="arrow">→</span>
+            <span>Open Google Review</span> <span class="arrow">→</span>
           </a>
-          <button class="btn btn-secondary" id="skipReview">Maybe later</button>
+          <button class="btn btn-secondary" id="skipReview"><span>Maybe later</span></button>
         </div>
       </div>
     </section>
 
-    <!-- ============ STEP 5: THANKS ============ -->
     <section class="step" data-step="thanks">
       <div class="thanks">
         <div class="check">✓</div>
-        <h2>Thank you.</h2>
+        <h2>Thank <em>you.</em></h2>
         <p>We've got your feedback and the Carter Fence team will read every word. We appreciate you taking the time.</p>
       </div>
     </section>
@@ -687,19 +704,267 @@
   </div>
 </main>
 
-<footer>
-  <strong>Carter Fence Company</strong> · 3490 Shearwater St, Naples, FL 34117 ·
-  <a href="tel:+12393534102">(239) 353-4102</a> ·
+<footer id="footer">
+  <strong style="color:var(--ink-soft);font-weight:500">Carter Fence Company</strong>
+  <span class="footer-divider">·</span>
+  3490 Shearwater St, Naples, FL 34117
+  <span class="footer-divider">·</span>
+  <a href="tel:+12393534102">(239) 353-4102</a>
+  <span class="footer-divider">·</span>
   <a href="https://carter-fence.com" target="_blank" rel="noopener">carter-fence.com</a>
 </footer>
 
+<script type="module">
+let THREE;
+try {
+  THREE = await import('https://unpkg.com/three/build/three.module.js');
+  window.__threeJsTookOver = true;
+} catch (err) {
+  console.error('Three.js failed to load:', err);
+  throw err;
+}
+
+const canvas = document.getElementById('scene-canvas');
+const scene = new THREE.Scene();
+scene.background = null;
+scene.fog = new THREE.Fog(0x0a0a0c, 8, 22);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 1.2, 0.5);
+camera.lookAt(0, 1.2, -10);
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+
+// Lights
+scene.add(new THREE.HemisphereLight(0xffffff, 0x222428, 0.55));
+const keyLight = new THREE.DirectionalLight(0xffeed4, 2.0);
+keyLight.position.set(5, 8, 3);
+scene.add(keyLight);
+const rimLight = new THREE.DirectionalLight(0x88aaff, 0.9);
+rimLight.position.set(-5, 4, -8);
+scene.add(rimLight);
+const goldAccent = new THREE.PointLight(0xd4a857, 1.8, 14, 2);
+goldAccent.position.set(0, 2, -3);
+scene.add(goldAccent);
+
+// Procedural environment for reflections
+const envScene = new THREE.Scene();
+envScene.add(new THREE.Mesh(
+  new THREE.SphereGeometry(50, 16, 16),
+  new THREE.MeshBasicMaterial({ side: THREE.BackSide, color: 0x2a2a32 })
+));
+const pmremGenerator = new THREE.PMREMGenerator(renderer);
+const envMap = pmremGenerator.fromScene(envScene).texture;
+scene.environment = envMap;
+
+const aluminumMaterial = new THREE.MeshStandardMaterial({
+  color: 0xf2efe6,
+  metalness: 0.0,
+  roughness: 0.55,
+  envMap: envMap,
+  envMapIntensity: 0.4
+});
+
+const fenceGroup = new THREE.Group();
+scene.add(fenceGroup);
+
+const PICKET_COUNT = 28;
+const RADIUS = 4.5;
+const PICKET_HEIGHT = 2.4;
+const PICKET_WIDTH = 0.09;
+const PICKET_DEPTH = 0.18;
+const ARC = Math.PI * 1.4;
+
+const pickets = [];
+
+for (let i = 0; i < PICKET_COUNT; i++) {
+  const t = i / (PICKET_COUNT - 1);
+  const angle = -ARC / 2 + t * ARC + Math.PI;
+  const x = Math.sin(angle) * RADIUS;
+  const z = Math.cos(angle) * RADIUS;
+
+  const geom = new THREE.BoxGeometry(PICKET_WIDTH, PICKET_HEIGHT, PICKET_DEPTH);
+  const picket = new THREE.Mesh(geom, aluminumMaterial);
+  picket.position.set(x, PICKET_HEIGHT / 2 + 8, z);
+  picket.lookAt(0, PICKET_HEIGHT / 2, 0);
+
+  const cap = new THREE.Mesh(
+    new THREE.ConeGeometry(PICKET_WIDTH * 1.4, 0.12, 4),
+    aluminumMaterial
+  );
+  cap.position.y = PICKET_HEIGHT / 2 + 0.06;
+  cap.rotation.y = Math.PI / 4;
+  picket.add(cap);
+
+  fenceGroup.add(picket);
+  pickets.push(picket);
+}
+
+// Rails
+function makeRail(yPos) {
+  const railGroup = new THREE.Group();
+  const segments = 60;
+  for (let i = 0; i < segments; i++) {
+    const t1 = i / segments;
+    const t2 = (i + 1) / segments;
+    const a1 = -ARC / 2 + t1 * ARC + Math.PI;
+    const a2 = -ARC / 2 + t2 * ARC + Math.PI;
+    const x1 = Math.sin(a1) * RADIUS;
+    const z1 = Math.cos(a1) * RADIUS;
+    const x2 = Math.sin(a2) * RADIUS;
+    const z2 = Math.cos(a2) * RADIUS;
+    const dx = x2 - x1;
+    const dz = z2 - z1;
+    const len = Math.sqrt(dx * dx + dz * dz);
+    const rail = new THREE.Mesh(
+      new THREE.BoxGeometry(0.1, 0.1, len),
+      aluminumMaterial
+    );
+    rail.position.set((x1 + x2) / 2, yPos, (z1 + z2) / 2);
+    rail.lookAt((x1 + x2) / 2 + dx, yPos, (z1 + z2) / 2 + dz);
+    railGroup.add(rail);
+  }
+  return railGroup;
+}
+
+const topRail = makeRail(PICKET_HEIGHT - 0.18);
+const bottomRail = makeRail(0.25);
+topRail.position.y = 8;
+bottomRail.position.y = 8;
+fenceGroup.add(topRail, bottomRail);
+
+// Particles
+const particleCount = 80;
+const particleGeom = new THREE.BufferGeometry();
+const particlePositions = new Float32Array(particleCount * 3);
+for (let i = 0; i < particleCount; i++) {
+  particlePositions[i * 3] = (Math.random() - 0.5) * 16;
+  particlePositions[i * 3 + 1] = Math.random() * 4;
+  particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 16;
+}
+particleGeom.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+const particles = new THREE.Points(particleGeom, new THREE.PointsMaterial({
+  color: 0xd4a857, size: 0.02, transparent: true, opacity: 0.6, sizeAttenuation: true
+}));
+scene.add(particles);
+
+// Mouse parallax
+let mouseX = 0, mouseY = 0;
+let targetCameraX = 0, targetCameraY = 1.2;
+window.addEventListener('mousemove', (e) => {
+  mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+  mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+});
+
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  targetCameraX += (mouseX * 0.3 - targetCameraX) * 0.04;
+  targetCameraY += (1.2 + mouseY * -0.15 - targetCameraY) * 0.04;
+  camera.position.x = targetCameraX;
+  camera.position.y = targetCameraY;
+  camera.lookAt(0, 1.2, -RADIUS);
+
+  const positions = particles.geometry.attributes.position.array;
+  for (let i = 0; i < particleCount; i++) {
+    positions[i * 3 + 1] += 0.002;
+    if (positions[i * 3 + 1] > 4) positions[i * 3 + 1] = 0;
+  }
+  particles.geometry.attributes.position.needsUpdate = true;
+  particles.rotation.y = t * 0.02;
+
+  goldAccent.intensity = 1.5 + Math.sin(t * 1.5) * 0.3;
+
+  renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Intro animation timeline
+const tl = gsap.timeline();
+
+// Start the 3D render loop
+animate();
+
+tl.to('#skipIntro', {
+  opacity: 1,
+  duration: 0.4,
+  onStart: () => document.getElementById('skipIntro').classList.add('visible')
+}, 0);
+
+tl.to('#introMeta', { opacity: 1, duration: 0.8, ease: 'power2.out' }, 0.3);
+
+tl.to(pickets.map(p => p.position), {
+  y: PICKET_HEIGHT / 2,
+  duration: 1.4,
+  ease: 'power3.out',
+  stagger: { amount: 1.2, from: 'center' }
+}, 0.4);
+
+tl.to([topRail.position, bottomRail.position], {
+  y: 0,
+  duration: 1.0,
+  ease: 'power3.out'
+}, 1.2);
+
+tl.to('#introMark .word span', {
+  y: 0,
+  duration: 1.0,
+  ease: 'power3.out',
+  stagger: 0.08
+}, 1.4);
+
+tl.to('#introSub', { opacity: 1, duration: 0.8, ease: 'power2.out' }, 2.4);
+tl.to('#scrollHint', { opacity: 1, duration: 0.6, ease: 'power2.out' }, 2.8);
+
+let introExited = false;
+function exitIntro() {
+  if (introExited) return;
+  introExited = true;
+
+  const exitTl = gsap.timeline();
+  exitTl.to('#skipIntro', {
+    opacity: 0, duration: 0.3,
+    onComplete: () => document.getElementById('skipIntro').classList.add('hidden')
+  });
+  exitTl.to('#introOverlay', { opacity: 0, duration: 0.6, ease: 'power2.inOut', onComplete: () => {
+    document.getElementById('introOverlay').style.display = 'none';
+  }}, 0);
+  exitTl.to(camera.position, { z: -3.5, y: 0.8, duration: 2.2, ease: 'power2.inOut' }, 0);
+  exitTl.to(fenceGroup.scale, { x: 0.8, y: 0.8, z: 0.8, duration: 2.0, ease: 'power2.inOut' }, 0.2);
+  exitTl.to('#topbar', { opacity: 1, duration: 0.8, ease: 'power2.out' }, 0.8);
+  exitTl.to('#main', { opacity: 1, duration: 1.0, ease: 'power2.out' }, 1.0);
+  exitTl.to('#footer', { opacity: 1, duration: 0.6, ease: 'power2.out' }, 1.4);
+  exitTl.to(canvas, { opacity: 0.25, duration: 1.5, ease: 'power2.inOut' }, 0.6);
+}
+
+tl.call(() => { setTimeout(exitIntro, 2000); }, [], 3.4);
+
+document.getElementById('skipIntro').addEventListener('click', exitIntro);
+document.getElementById('introOverlay').addEventListener('click', exitIntro);
+
+window.celebrateFromStars = () => {
+  gsap.to(canvas, { opacity: 0.5, duration: 0.4 });
+  gsap.to(fenceGroup.rotation, { y: '+=0.15', duration: 1.2, ease: 'power2.out' });
+  setTimeout(() => { gsap.to(canvas, { opacity: 0.25, duration: 0.8 }); }, 1500);
+};
+</script>
+
 <script>
-  // ===== Configuration =====
-  // Google Maps deep-link to the business so the customer can leave a review.
-  // This URL opens the Carter Fence Google Maps listing where the "Write a review" button is one tap away.
   const GOOGLE_REVIEW_URL = "https://g.page/r/Cfm3K8Q_YRReEAE/review";
 
-  // ===== Step machine =====
   const steps = document.querySelectorAll('.step');
   const goTo = (name) => {
     steps.forEach(s => s.classList.toggle('active', s.dataset.step === name));
@@ -708,10 +973,8 @@
 
   let currentRating = null;
 
-  // Step 1 -> Step 2
   document.getElementById('startBtn').addEventListener('click', () => goTo('rating'));
 
-  // Step 2: rating selection
   const scaleButtons = document.querySelectorAll('#scale button');
   scaleButtons.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -719,21 +982,19 @@
       btn.classList.add('is-selected');
       currentRating = parseInt(btn.dataset.value, 10);
 
-      // Small delay so the user sees their selection register
       setTimeout(() => {
         if (currentRating === 5) {
-          // Set up Google review button and go to celebrate screen
+          if (window.celebrateFromStars) window.celebrateFromStars();
           document.getElementById('googleReviewBtn').setAttribute('href', GOOGLE_REVIEW_URL);
           goTo('celebrate');
         } else {
           document.getElementById('ratingDisplay').textContent = currentRating;
           goTo('feedback');
         }
-      }, 280);
+      }, 320);
     });
   });
 
-  // Step 3: feedback submission
   document.getElementById('backToRating').addEventListener('click', () => goTo('rating'));
   document.getElementById('submitFeedback').addEventListener('click', () => {
     const feedback = document.getElementById('feedbackText').value.trim();
@@ -744,41 +1005,27 @@
       const ta = document.getElementById('feedbackText');
       ta.focus();
       ta.style.borderColor = 'var(--rust)';
-      ta.style.boxShadow = '0 0 0 3px rgba(181,81,42,.12)';
       return;
     }
 
-    // ====================================================================
-    // BACKEND HOOK — wire this up to email, a Google Sheet, Airtable,
-    // Formspree, or any endpoint you want. Right now it just logs.
-    // ====================================================================
     const payload = {
-      rating: currentRating,
-      feedback,
-      name: name || null,
-      contact: email || null,
+      rating: currentRating, feedback,
+      name: name || null, contact: email || null,
       submittedAt: new Date().toISOString(),
       source: 'survey-landing'
     };
     console.log('Survey submission:', payload);
 
-    // Example: send to your endpoint
-    // fetch('/api/survey', { method: 'POST', body: JSON.stringify(payload) });
-
     goTo('thanks');
   });
 
-  // Step 4: skip review
   document.getElementById('skipReview').addEventListener('click', () => {
-    // Log the 5/5 even if they skip the review
     console.log('Survey submission:', { rating: 5, feedback: null, submittedAt: new Date().toISOString() });
     goTo('thanks');
   });
 
-  // When they tap the Google review button, also count it as submitted
   document.getElementById('googleReviewBtn').addEventListener('click', () => {
     console.log('Survey submission:', { rating: 5, redirectedToGoogle: true, submittedAt: new Date().toISOString() });
-    // Show the thanks screen behind it so when they come back from Google it's already friendly
     setTimeout(() => goTo('thanks'), 400);
   });
 </script>
